@@ -1,771 +1,822 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Hello, World!</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-      <h1 class="title">Hello World! </h1>
-      <p id="currentTime"></p>
-      <script src="script.js"></script>
-  </body>
-</html><!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Universal Photos Manager — Glitch</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CyberDrive Studio Pro — Photographer Edition (DS Project)</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          'accent-green':'#9eff00',
-          'accent-cyan':'#00e5ff',
-          'accent-magenta':'#ff2bd6',
-          'dark-ink':'#0a0b10',
-          'dark-gray':'#0f1020',
-          'light-gray':'#8a90a6',
-        },
-      },
-    },
-  }
-</script>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-  body { font-family: 'Inter', sans-serif; color: #e8eaf6; }
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<!-- Exif reader -->
+<script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
 
-  /* Glitch theme background: scanlines + grain + gradients */
+<style>
   :root{
-    --bg-0:#0a0b10;
-    --bg-1:#0f1020;
-    --neon-1:#00e5ff;
-    --neon-2:#ff2bd6;
-    --neon-3:#9eff00;
-    --ink:#e8eaf6;
-    --muted:#8a90a6;
+    --accent: #00ffa1;
+    --muted: #bfcfc7;
+    --card: rgba(255,255,255,0.04);
   }
   body{
-    background: radial-gradient(1200px 800px at 20% 10%, #12142a 0%, transparent 60%),
-                radial-gradient(900px 700px at 80% 80%, #10142b 0%, transparent 60%),
-                linear-gradient(180deg, #0a0b10, #0e1020);
-    color: var(--ink);
-    min-height: 100vh;
+    background: linear-gradient(160deg,#0b0b0b 0%, #0f1113 60%);
+    color: #e6f0ea;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   }
-  body::before, body::after{
-    content:'';
-    position: fixed; inset:0; pointer-events:none; z-index:0;
+  /* Hero */
+  .hero{
+    background-image: url('https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=1600&q=80');
+    background-size: cover; background-position: center;
+    position: relative; height: 28vh; border-bottom: 1px solid rgba(255,255,255,0.04);
   }
-  body::before{
-    background: repeating-linear-gradient( to bottom, rgba(255,255,255,0.03) 0 2px, rgba(0,0,0,0.03) 2px 4px );
-    mix-blend-mode: soft-light; opacity:.5;
-  }
-  body::after{
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.05"/></svg>');
-    opacity:.6; animation: grain 8s steps(10) infinite;
-  }
-  @keyframes grain{
-    0%{transform:translate(0,0)} 10%{transform:translate(-1%,1%)} 20%{transform:translate(-2%,-1%)} 30%{transform:translate(1%,2%)}
-    40%{transform:translate(1%,-2%)} 50%{transform:translate(-1%,2%)} 60%{transform:translate(-2%,1%)} 70%{transform:translate(2%,1%)}
-    80%{transform:translate(-1%,-1%)} 90%{transform:translate(1%,-2%)} 100%{transform:translate(0,0)}
-  }
+  .hero::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.8));}
+  .hero-inner{ position:relative; z-index:2; display:flex; align-items:center; justify-content:center; height:100%;}
+  .hero-title { font-weight:700; font-size:2rem; color:var(--accent); text-shadow:0 6px 30px rgba(0,255,161,0.08);}
 
-  /* Holo glass containers */
-  .glass{
-    background: linear-gradient(180deg, rgba(18,22,44,.55), rgba(10,12,20,.55));
-    border: 1px solid rgba(0,229,255,.15);
-    box-shadow: 0 10px 30px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.04);
-    position: relative; z-index:1;
-  }
-  .scroll-y { max-height: 60vh; overflow-y: auto; scrollbar-width: thin; }
-  .scroll-y::-webkit-scrollbar { width: 6px; }
-  .scroll-y::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 10px; }
+  /* Cards */
+  .photo-card { background: var(--card); border-radius:12px; border:1px solid rgba(255,255,255,0.04); overflow:hidden; transition:all .25s ease; position:relative; }
+  .photo-card:hover{ transform:translateY(-6px) scale(1.01); box-shadow:0 10px 30px rgba(0,255,161,0.06); }
+  .photo-card img{ width:100%; height:200px; object-fit:cover; display:block; transition:transform .35s ease; }
+  .photo-card:hover img{ transform:scale(1.05); }
+  .badge{ background: rgba(0,0,0,0.45); padding:4px 8px; border-radius:999px; font-size:12px; color:var(--muted); }
 
-  /* Tabs */
-  .tab-btn { padding: 10px 20px; border-radius: 8px 8px 0 0; background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); color: var(--muted); transition: .3s; }
-  .tab-btn.active{
-    background: linear-gradient(90deg, rgba(0,229,255,.15), rgba(255,43,214,.15));
-    border-color: rgba(0,229,255,.35);
-    color: var(--ink);
-    text-shadow: 0 0 8px rgba(0,229,255,.6);
-  }
-  .tab { display: none; }
-  .tab.active { display: block; }
+  /* Drag overlay */
+  .drop-overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:60; background: rgba(0,0,0,0.6); color:var(--accent); font-size:1.6rem; }
 
-  /* Buttons: neon split hover */
-  .btn{
-    transition: .2s; position: relative; overflow:hidden;
-    border: 1px solid rgba(255,255,255,.08);
-    box-shadow: 0 0 0 0 rgba(0,229,255,0);
-  }
-  .btn:hover{ transform: translateY(-1px); box-shadow: 0 0 20px rgba(0,229,255,.25), 0 0 35px rgba(255,43,214,.15) inset; }
-  .btn:active{ transform: translateY(0); }
-  .btn::before, .btn::after{
-    content:''; position:absolute; inset:0; mix-blend-mode:screen; pointer-events:none; opacity:0; transition:.2s;
-  }
-  .btn::before{ background: linear-gradient(90deg, transparent, rgba(0,229,255,.25), transparent); transform: translateX(-100%); }
-  .btn::after{ background: linear-gradient(90deg, transparent, rgba(255,43,214,.2), transparent); transform: translateX(100%); }
-  .btn:hover::before{ opacity:1; transform: translateX(0); }
-  .btn:hover::after{ opacity:1; transform: translateX(0); }
+  /* Modal */
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.9); display:none; align-items:center; justify-content:center; z-index:80; padding:2rem;}
+  .modal-backdrop.show{ display:flex; }
+  .modal-card{ width:95%; max-width:1100px; display:flex; gap:1rem; }
+  .modal-img{ max-height:80vh; max-width:65%; object-fit:contain; border-radius:8px; }
+  .meta { color:var(--muted); font-size:14px; }
 
-  .file-input{ display:none; }
-  .file-label{ cursor:pointer; display:inline-block; padding:12px 24px; background:#00e5ff; color:#031018; border-radius:8px; transition:.2s; border:1px solid rgba(255,255,255,.1); }
-  .file-label:hover{ filter: drop-shadow(0 0 10px rgba(0,229,255,.4)); }
+  /* Left sidebar */
+  .sidebar{ border-right:1px solid rgba(255,255,255,0.03); min-height:60vh; }
 
-  /* Inputs */
-  input, select{
-    background: #111226 !important;
-    border-color: rgba(0,229,255,.15) !important;
-    color: var(--ink) !important;
-    box-shadow: inset 0 0 12px rgba(0,0,0,.35);
-  }
-
-  /* Gallery cards */
-  #gallery .rounded-lg{
-    border: 1px solid rgba(255,255,255,.05);
-    background: linear-gradient(180deg, rgba(16,18,36,.75), rgba(12,13,25,.75));
-    transition: transform .15s ease, box-shadow .15s ease, filter .2s ease;
-    position: relative;
-  }
-  #gallery .rounded-lg:hover{
-    transform: translateY(-2px);
-    filter: drop-shadow(0 0 10px rgba(0,229,255,.18));
-  }
-  .thumb{ aspect-ratio: 1/1; object-fit: cover; filter: saturate(1.1) contrast(1.05); }
-  #gallery .rounded-lg:hover img{
-    filter: contrast(1.12) saturate(1.2) drop-shadow(0 0 8px rgba(0,229,255,.25));
-    transform: translateZ(0);
-  }
-  #gallery .rounded-lg:hover::after{
-    content:''; position:absolute; inset:0; pointer-events:none;
-    background: linear-gradient(to right, rgba(0,229,255,.08), rgba(255,43,214,.08));
-    mix-blend-mode: screen;
-  }
-
-  /* Status and badges */
-  #status{ color: var(--neon-3); text-shadow: 0 0 6px rgba(158,255,0,.5); }
-  .current-chip{
-    box-shadow: 0 0 10px rgba(0,229,255,.5);
-    border: 1px solid rgba(0,229,255,.35);
-  }
-
-  /* Preview frame */
-  #preview .preview-box{
-    width: 16rem; height: 16rem; background: #0d0f1b;
-    border: 1px solid rgba(0,229,255,.18);
-    box-shadow: inset 0 0 40px rgba(0,229,255,.06);
-  }
-
-  /* Glitch text utility */
-  .glitch{
-    position: relative; display:inline-block;
-    text-shadow: 0 0 8px rgba(0,229,255,.6);
-  }
-  .glitch::before, .glitch::after{
-    content: attr(data-text);
-    position:absolute; left:0; top:0; clip-path: inset(0 0 0 0);
-  }
-  .glitch::before{
-    color: var(--neon-2); transform: translate(1px, 0); mix-blend-mode:screen;
-    animation: glitchShift 2s infinite cubic-bezier(.25,.46,.45,.94);
-  }
-  .glitch::after{
-    color: var(--neon-1); transform: translate(-1px, 0); mix-blend-mode:screen;
-    animation: glitchShift 1.7s infinite reverse cubic-bezier(.25,.46,.45,.94);
-  }
-  @keyframes glitchShift{
-    0%{ clip-path: inset(0 0 90% 0); }
-    10%{ clip-path: inset(10% 0 70% 0); transform: translate(-2px,1px); }
-    20%{ clip-path: inset(40% 0 40% 0); transform: translate(2px,-1px); }
-    30%{ clip-path: inset(80% 0 5% 0); }
-    40%{ clip-path: inset(50% 0 30% 0); }
-    50%{ clip-path: inset(0 0 90% 0); }
-    60%{ clip-path: inset(60% 0 20% 0); }
-    70%{ clip-path: inset(30% 0 50% 0); }
-    80%{ clip-path: inset(10% 0 70% 0); }
-    90%{ clip-path: inset(0 0 90% 0); }
-    100%{ clip-path: inset(0 0 90% 0); }
-  }
-
-  /* Flicker animation reuse */
-  .pulse{ animation: flick 2.2s infinite; }
-  @keyframes flick{
-    0%,100%{ opacity:1; filter:none; }
-    45%{ opacity:.95; filter: hue-rotate(5deg) drop-shadow(0 0 6px rgba(0,229,255,.4)); }
-    50%{ opacity:.85; filter: hue-rotate(-5deg) drop-shadow(0 0 10px rgba(255,43,214,.4)); }
-    55%{ opacity:.95; }
-  }
-
-  /* Slider styling */
-  .slider { -webkit-appearance: none; height: 4px; background: rgba(255,255,255,.25); border-radius: 2px; outline: none; }
-  .slider::-webkit-slider-thumb{ -webkit-appearance:none; width:12px; height:12px; background:#00e5ff; border-radius:50%; cursor:pointer; }
+  /* small utilities */
+  .tag { background:rgba(0,0,0,0.4); color:var(--accent); padding:4px 8px; border-radius:999px; font-size:12px; }
+  .control { background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.04); padding:6px 10px; border-radius:8px; color:var(--muted); }
+  .floating { position:fixed; right:1.6rem; bottom:1.8rem; z-index:70; }
 </style>
 </head>
-<body class="p-4 sm:p-8">
-  <div id="app" class="max-w-6xl mx-auto">
-    <header class="mb-8 p-6 glass rounded-2xl shadow-xl">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
-        <div>
-          <h1 class="text-3xl font-extrabold mb-1 flex items-center">
-            <i class="fas fa-images text-accent-cyan mr-3"></i>
-            <span class="glitch" data-text="Universal Photos Manager">Universal Photos Manager</span>
-          </h1>
-          <p class="text-light-gray">Doubly Linked & Circular Gallery</p>
-        </div>
-        <div class="bg-dark-gray p-3 rounded-lg border border-[rgba(255,255,255,.08)]">
-          <div class="text-sm text-light-gray truncate">
-            <span class="font-semibold">User ID:</span> <span id="user-id" class="text-white">PHOTO_USER</span>
-          </div>
-          <div class="text-sm text-light-gray">
-            <span class="font-semibold">Status:</span> <span id="status" class="text-[var(--neon-3)]">Ready</span>
-          </div>
-        </div>
-      </div>
-    </header>
+<body>
 
-    <div class="flex flex-col lg:flex-row gap-8">
-      <div class="lg:w-2/3 flex flex-col gap-8">
-        <section class="p-6 glass rounded-2xl shadow-xl">
-          <h2 class="text-xl font-bold mb-4"><span class="glitch" data-text="Add Photos">Add Photos</span></h2>
-          <div class="flex mb-4">
-            <button id="file-tab" class="tab-btn active mr-2"><i class="fas fa-file-image mr-2"></i>From Files</button>
-            <button id="url-tab" class="tab-btn"><i class="fas fa-link mr-2"></i>From URL</button>
-          </div>
-
-          <div id="file-tab-content" class="tab active">
-            <div class="flex flex-col gap-4">
-              <div class="flex flex-col sm:flex-row gap-4">
-                <input id="file-title" type="text" placeholder="Title (optional)" class="flex-grow p-3 rounded-lg border">
-                <input id="file-tags" type="text" placeholder="Tags, comma-separated (optional)" class="flex-grow p-3 rounded-lg border">
-              </div>
-              <div class="flex flex-col sm:flex-row gap-4 items-center">
-                <label for="file-input" class="file-label"><i class="fas fa-file-upload mr-2"></i>Select Images</label>
-                <input id="file-input" class="file-input" type="file" accept="image/*" multiple>
-                <span id="file-count" class="text-light-gray text-sm">No files selected</span>
-              </div>
-              <p class="text-xs text-light-gray">Supported: JPG, PNG, GIF, WebP, BMP, TIFF, HEIC (browser support varies)</p>
-            </div>
-          </div>
-
-          <div id="url-tab-content" class="tab">
-            <div class="flex flex-col gap-4">
-              <div class="flex flex-col sm:flex-row gap-4">
-                <input id="url-title" type="text" placeholder="Title (required)" class="flex-grow p-3 rounded-lg border">
-                <input id="url-tags" type="text" placeholder="Tags, comma-separated (optional)" class="flex-grow p-3 rounded-lg border">
-              </div>
-              <div class="flex flex-col sm:flex-row gap-4">
-                <input id="image-url" type="url" placeholder="Image URL (https://...)" class="flex-grow p-3 rounded-lg border">
-                <button id="add-url-btn" type="button" class="btn bg-[rgba(0,229,255,.1)] text-white font-semibold py-3 px-6 rounded-lg">
-                  <span class="flex items-center justify-center"><i class="fas fa-plus mr-2"></i>Add from URL</span>
-                </button>
-              </div>
-              <p class="text-xs text-light-gray">Use any publicly accessible image URL. Some CDNs block CORS for dimensions probing.</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="p-6 glass rounded-2xl shadow-xl flex-grow">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold"><span class="glitch" data-text="Gallery">Gallery</span></h2>
-            <div class="text-light-gray text-sm"><span id="gallery-count">0</span> photos</div>
-          </div>
-
-          <div class="mb-4 flex flex-col md:flex-row gap-3">
-            <input id="search" type="text" placeholder="Search title, tags, type..." class="flex-grow p-3 rounded-lg border">
-            <select id="quick-tag" class="p-3 rounded-lg border">
-              <option value="">All tags</option>
-            </select>
-          </div>
-
-          <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 scroll-y rounded-lg p-2">
-            <p class="text-light-gray p-4 text-center col-span-full">No photos yet. Add some above!</p>
-          </div>
-        </section>
-      </div>
-
-      <div class="lg:w-1/3 flex flex-col gap-8">
-        <section class="p-6 glass rounded-2xl shadow-xl">
-          <h2 class="text-xl font-bold mb-4"><span class="glitch" data-text="Preview">Preview</span></h2>
-          <div id="preview" class="text-center">
-            <div class="mb-4 flex justify-center">
-              <div class="preview-box rounded-xl overflow-hidden flex items-center justify-center">
-                <i class="fas fa-image text-5xl text-light-gray"></i>
-              </div>
-            </div>
-            <div class="mb-2">
-              <p id="preview-title" class="text-2xl font-bold truncate">--</p>
-              <p id="preview-meta" class="text-light-gray text-sm truncate">--</p>
-              <p id="preview-source" class="text-xs text-light-gray mt-1"></p>
-            </div>
-
-            <div class="flex justify-center items-center mt-4 gap-3">
-              <button id="fit-btn" class="btn text-light-gray hover:text-white"><i class="fas fa-expand"></i></button>
-              <button id="rotate-left-btn" class="btn text-light-gray hover:text-white"><i class="fas fa-rotate-left"></i></button>
-              <button id="rotate-right-btn" class="btn text-light-gray hover:text-white"><i class="fas fa-rotate-right"></i></button>
-              <a id="download-btn" class="btn text-white bg-dark-gray px-3 py-2 rounded-lg hover:bg-gray-700 border" download><i class="fas fa-download"></i></a>
-            </div>
-
-            <div class="flex items-center justify-center mt-4 gap-3">
-              <i class="fas fa-magnifying-glass-minus text-light-gray"></i>
-              <input id="zoom-slider" type="range" min="0.25" max="3" step="0.05" value="1" class="slider w-40">
-              <i class="fas fa-magnifying-glass-plus text-light-gray"></i>
-            </div>
-          </div>
-        </section>
-
-        <section class="p-6 glass rounded-2xl shadow-xl">
-          <h2 class="text-xl font-bold mb-4"><span class="glitch" data-text="Gallery Controls">Gallery Controls</span></h2>
-          <div class="space-y-4">
-            <button id="clear-btn" class="btn w-full bg-red-500/80 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600">
-              <span class="flex items-center justify-center"><i class="fas fa-trash mr-2"></i>Clear Gallery</span>
-            </button>
-            <div class="pt-4 border-t border-[rgba(255,255,255,.08)]">
-              <p class="text-sm text-light-gray mb-2">Click a photo to select it, then use remove.</p>
-              <button id="remove-btn" class="btn w-full bg-dark-gray text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-700 border" disabled>
-                <span class="flex items-center justify-center"><i class="fas fa-minus-circle mr-2"></i>Remove Selected Photo</span>
-              </button>
-            </div>
-            <div class="pt-4 border-t border-[rgba(255,255,255,.08)] flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <button id="shuffle-btn" class="btn text-light-gray hover:text-accent-magenta"><i class="fas fa-random text-xl"></i></button>
-                <button id="prev-btn" class="btn text-white bg-dark-gray p-3 rounded-full hover:bg-gray-700 border"><i class="fas fa-arrow-left"></i></button>
-                <button id="next-btn" class="btn text-white bg-dark-gray p-3 rounded-full hover:bg-gray-700 border"><i class="fas fa-arrow-right"></i></button>
-                <button id="repeat-btn" class="btn text-light-gray hover:text-accent-cyan"><i class="fas fa-redo text-xl"></i></button>
-              </div>
-            </div>
-          </div>
-        </section>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="text-center">
+        <div class="hero-title">CyberDrive Studio Pro</div>
+        <div class="text-sm text-white/70 mt-2">Photographer portfolio & DS project — albums, tags, indexing, undo, drag-drop, EXIF</div>
       </div>
     </div>
+  </section>
 
-    <section class="mt-8 p-6 glass rounded-2xl shadow-xl">
-      <h2 class="text-xl font-bold mb-4"><span class="glitch" data-text="Gallery Data Structure">Gallery Data Structure</span></h2>
-      <div class="bg-[#0d0f1b] p-4 rounded-lg border border-[rgba(0,229,255,.18)]">
-        <div id="dll-visual" class="flex flex-wrap justify-center gap-4">
-          <div class="text-center">
-            <div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border border-[rgba(255,255,255,.08)]">Head</div>
-            <div class="text-light-gray mt-2">←→</div>
+  <!-- APP -->
+  <main class="max-w-7xl mx-auto mt-8 px-6">
+    <div class="flex gap-6">
+
+      <!-- LEFT SIDEBAR (Albums & Stats) -->
+      <aside class="w-64 sidebar py-4">
+        <div class="px-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold">Albums</h3>
+            <button id="newAlbumBtn" class="control"><i class="fa fa-plus"></i></button>
           </div>
-          <div class="text-center">
-            <div class="bg-light-gray text-dark-ink p-3 rounded-lg border border-[rgba(255,255,255,.08)]">Empty</div>
-            <div class="text-light-gray mt-2">←→</div>
+
+          <ul id="albumList" class="space-y-2 mb-6">
+            <!-- Populated by JS -->
+          </ul>
+
+          <div class="mb-4">
+            <h4 class="text-sm font-semibold mb-2">Filters</h4>
+            <div class="flex flex-col gap-2">
+              <input id="tagFilter" placeholder="Filter by tag (comma-separated)" class="control" />
+              <select id="sortSelect" class="control">
+                <option value="date_desc">Sort: Date (Newest)</option>
+                <option value="date_asc">Date (Oldest)</option>
+                <option value="name_asc">Name (A → Z)</option>
+                <option value="name_desc">Name (Z → A)</option>
+                <option value="size_desc">Size (Large)</option>
+                <option value="size_asc">Size (Small)</option>
+              </select>
+            </div>
           </div>
-          <div class="text-center">
-            <div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border border-[rgba(255,255,255,.08)]">Tail</div>
+
+          <div class="mb-4">
+            <h4 class="text-sm font-semibold mb-2">Project Stats</h4>
+            <div class="text-sm meta" id="statsBlock">
+              <!-- JS updated -->
+            </div>
+          </div>
+
+          <div>
+            <h4 class="text-sm font-semibold mb-2">Undo (Stack)</h4>
+            <div class="flex gap-2">
+              <button id="undoBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-md">Undo</button>
+              <button id="clearAllBtn" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md">Clear All</button>
+            </div>
           </div>
         </div>
-        <div class="mt-4 text-center text-light-gray text-sm">
-          <p>This gallery uses a <span class="font-bold text-white">Doubly Linked List</span> for navigation</p>
-          <p class="mt-1">and a <span class="font-bold text-white">Circular List</span> for seamless looping</p>
+      </aside>
+
+      <!-- MAIN -->
+      <section class="flex-1">
+        <!-- Toolbar -->
+        <div class="flex items-center justify-between mb-4 gap-4">
+          <div class="flex items-center gap-3">
+            <input type="file" id="fileInput" multiple accept="image/*" class="hidden"/>
+            <button id="chooseBtn" class="bg-green-500 hover:bg-green-400 text-black px-4 py-2 rounded-md"><i class="fa fa-upload mr-2"></i>Upload</button>
+            <button id="urlBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-md"><i class="fa fa-link mr-2"></i>From URL</button>
+            <button id="dragHintBtn" class="control"><i class="fa fa-hand-paper"></i> Drag & Drop</button>
+
+            <div class="ml-4 flex items-center gap-2">
+              <input id="searchBox" placeholder="Search (binary index search available)" class="control" />
+              <button id="indexBtn" class="control">Build Index</button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span id="selectedCount" class="tag">0 selected</span>
+            <button id="bulkTagBtn" class="control"><i class="fa fa-tag"></i> Tag</button>
+            <button id="moveBtn" class="control"><i class="fa fa-folder-open"></i> Move</button>
+            <button id="downloadBtn" class="control"><i class="fa fa-download"></i> Download</button>
+            <button id="deleteBtn" class="control text-red-400"><i class="fa fa-trash"></i> Delete</button>
+          </div>
         </div>
-      </div>
-    </section>
+
+        <!-- Albums breadcrumb -->
+        <div class="mb-3 flex items-center gap-3">
+          <div class="badge px-3 py-1">Album: <span id="currentAlbum">All Photos</span></div>
+          <div class="meta text-sm" id="indexInfo"></div>
+        </div>
+
+        <!-- Gallery grid -->
+        <div id="galleryGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+          <!-- JS injected photo-card items -->
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-6 flex items-center justify-between">
+          <div class="text-sm meta" id="pageInfo"></div>
+          <div class="flex gap-2">
+            <button id="prevPage" class="control">Prev</button>
+            <button id="nextPage" class="control">Next</button>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- Floating Upload -->
+  <div class="floating">
+    <button id="floatingUpload" class="bg-gradient-to-br from-green-400 to-green-300 p-4 rounded-full shadow-lg text-black"><i class="fa fa-plus"></i></button>
   </div>
 
-  <!-- Modal -->
-  <div id="modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
-    <div class="bg-dark-gray p-6 rounded-2xl shadow-2xl max-w-sm w-full border border-[rgba(255,255,255,.12)]">
-      <h3 class="text-xl font-bold mb-4"><span class="glitch" data-text="Action Required">Action Required</span></h3>
-      <p id="modal-msg" class="text-light-gray mb-6"></p>
-      <div class="flex justify-end space-x-3">
-        <button id="modal-cancel" type="button" class="px-4 py-2 bg-light-gray/20 rounded-lg hover:bg-light-gray/30 text-white font-semibold border">Cancel</button>
-        <button id="modal-confirm" type="button" class="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600 text-white font-semibold border">Confirm</button>
+  <!-- Drop overlay -->
+  <div id="dropOverlay" class="drop-overlay"><i class="fa fa-cloud-upload-alt mr-3"></i> Drop images to upload</div>
+
+  <!-- Preview Modal -->
+  <div id="modal" class="modal-backdrop">
+    <div class="modal-card bg-gradient-to-br from-gray-900 to-black/80 p-4 rounded-lg flex items-start">
+      <img id="modalImage" class="modal-img" alt="preview">
+      <div class="flex-1">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 id="modalName" class="text-white text-xl font-semibold"></h3>
+            <div id="modalMeta" class="meta mt-2"></div>
+          </div>
+          <div class="flex gap-2">
+            <button id="toggleWatermark" class="control">Toggle Watermark</button>
+            <button id="downloadSingle" class="control"><i class="fa fa-download"></i></button>
+            <button id="closeModal" class="bg-red-600 px-3 py-2 rounded-md text-white">Close</button>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <h4 class="text-sm font-semibold">Tags</h4>
+          <div id="modalTags" class="flex gap-2 mt-2"></div>
+
+          <h4 class="text-sm font-semibold mt-4">EXIF / Camera Info</h4>
+          <pre id="exifData" class="meta mt-2 whitespace-pre-wrap"></pre>
+        </div>
       </div>
     </div>
   </div>
 
-  <script>
-    // State
-    let gallery = [];         // {id,title,tags[],src,file?,source,order,addedBy,createdAt,w?,h?,type?,size?}
-    let selectedId = null;
-    let currentId = null;
-    let lastOrder = 0;
-    let isShuffled = false;
-    let isRepeating = false;
-    let zoom = 1;
-    let rotation = 0;
+<script>
+/* ============================
+  Data model & structures
+   - photos: array of photo objects
+   - albums: Map albumName -> array of photo ids
+   - tags per photo: Set
+   - index: sorted array of {name, id} used for binary search
+   - undoStack: stack for restore
+   Stored persistently in localStorage as 'cd_photos' and 'cd_albums'
+   Example photo object:
+   {
+     id: "uuid",
+     src: "data:image/...",
+     name: "IMG123.jpg",
+     size: 34567,
+     date: "...",
+     tags: ["wedding","bw"],
+     album: "All Photos",
+     exif: {Make:..., Model:...}
+   }
+============================ */
 
-    // Elements
-    const statusEl = document.getElementById('status');
-    const galleryCountEl = document.getElementById('gallery-count');
-    const galleryEl = document.getElementById('gallery');
-    const dllEl = document.getElementById('dll-visual');
+const PAGE_SIZE = 12;
+let photos = [];         // array of photo objects
+let albums = new Map();  // albumName -> Set(ids)
+let indexArr = [];       // sorted index [{nameLower, id}]
+let undoStack = [];      // stack of deleted items for undo
+let currentAlbum = "All Photos";
+let selected = new Set();
+let page = 1;
 
-    const fileTab = document.getElementById('file-tab');
-    const urlTab = document.getElementById('url-tab');
-    const fileTabContent = document.getElementById('file-tab-content');
-    const urlTabContent = document.getElementById('url-tab-content');
+// DOM refs
+const fileInput = document.getElementById('fileInput');
+const chooseBtn = document.getElementById('chooseBtn');
+const urlBtn = document.getElementById('urlBtn');
+const floatingUpload = document.getElementById('floatingUpload');
+const galleryGrid = document.getElementById('galleryGrid');
+const albumList = document.getElementById('albumList');
+const newAlbumBtn = document.getElementById('newAlbumBtn');
+const currentAlbumLabel = document.getElementById('currentAlbum');
+const selectedCount = document.getElementById('selectedCount');
+const deleteBtn = document.getElementById('deleteBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const moveBtn = document.getElementById('moveBtn');
+const bulkTagBtn = document.getElementById('bulkTagBtn');
+const clearAllBtn = document.getElementById('clearAllBtn');
+const undoBtn = document.getElementById('undoBtn');
+const tagFilter = document.getElementById('tagFilter');
+const sortSelect = document.getElementById('sortSelect');
+const searchBox = document.getElementById('searchBox');
+const indexBtn = document.getElementById('indexBtn');
+const indexInfo = document.getElementById('indexInfo');
+const statsBlock = document.getElementById('statsBlock');
+const pageInfo = document.getElementById('pageInfo');
+const prevPage = document.getElementById('prevPage');
+const nextPage = document.getElementById('nextPage');
 
-    const fileInput = document.getElementById('file-input');
-    const fileCountEl = document.getElementById('file-count');
-    const fileTitle = document.getElementById('file-title');
-    const fileTags = document.getElementById('file-tags');
+// modal
+const modal = document.getElementById('modal');
+const modalImage = document.getElementById('modalImage');
+const modalName = document.getElementById('modalName');
+const modalMeta = document.getElementById('modalMeta');
+const modalTags = document.getElementById('modalTags');
+const exifData = document.getElementById('exifData');
+const closeModal = document.getElementById('closeModal');
+const toggleWatermark = document.getElementById('toggleWatermark');
+const downloadSingle = document.getElementById('downloadSingle');
 
-    const urlTitle = document.getElementById('url-title');
-    const urlTags = document.getElementById('url-tags');
-    const imageUrl = document.getElementById('image-url');
-    const addUrlBtn = document.getElementById('add-url-btn');
+// overlay
+const dropOverlay = document.getElementById('dropOverlay');
 
-    const searchEl = document.getElementById('search');
-    const quickTagEl = document.getElementById('quick-tag');
+// init
+loadFromStorage();
+renderAll();
 
-    const removeBtn = document.getElementById('remove-btn');
-    const clearBtn = document.getElementById('clear-btn');
-    const shuffleBtn = document.getElementById('shuffle-btn');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
-    const repeatBtn = document.getElementById('repeat-btn');
+/* -------------------------
+   Event hooks
+------------------------- */
+chooseBtn.addEventListener('click', () => fileInput.click());
+floatingUpload.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', handleFileUpload);
+urlBtn.addEventListener('click', handleUrlUpload);
 
-    const previewTitle = document.getElementById('preview-title');
-    const previewMeta = document.getElementById('preview-meta');
-    const previewSource = document.getElementById('preview-source');
-    const zoomSlider = document.getElementById('zoom-slider');
-    const fitBtn = document.getElementById('fit-btn');
-    const rotateLeftBtn = document.getElementById('rotate-left-btn');
-    const rotateRightBtn = document.getElementById('rotate-right-btn');
-    const downloadBtn = document.getElementById('download-btn');
+newAlbumBtn.addEventListener('click', () => {
+  const name = prompt('New album name:');
+  if(name) createAlbum(name);
+});
 
-    const modal = document.getElementById('modal');
-    const modalMsg = document.getElementById('modal-msg');
-    const modalConfirm = document.getElementById('modal-confirm');
-    const modalCancel = document.getElementById('modal-cancel');
+albumList.addEventListener('click', (e) => {
+  const li = e.target.closest('li[data-album]');
+  if(!li) return;
+  currentAlbum = li.dataset.album;
+  page = 1;
+  renderAll();
+});
 
-    function setStatus(msg){ statusEl.textContent = msg; setTimeout(()=>statusEl.textContent='Ready', 3000); }
+deleteBtn.addEventListener('click', bulkDelete);
+downloadBtn.addEventListener('click', bulkDownload);
+moveBtn.addEventListener('click', bulkMove);
+bulkTagBtn.addEventListener('click', bulkTag);
+undoBtn.addEventListener('click', undoDelete);
+clearAllBtn.addEventListener('click', clearAllData);
 
-    // Tabs
-    fileTab.addEventListener('click', ()=>switchTab('file'));
-    urlTab.addEventListener('click', ()=>switchTab('url'));
-    function switchTab(tab){
-      fileTab.classList.toggle('active', tab==='file');
-      urlTab.classList.toggle('active', tab==='url');
-      fileTabContent.classList.toggle('active', tab==='file');
-      urlTabContent.classList.toggle('active', tab==='url');
+tagFilter.addEventListener('input', () => { page = 1; renderAll(); });
+sortSelect.addEventListener('change', () => { page = 1; renderAll(); });
+searchBox.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ quickSearch(); }});
+indexBtn.addEventListener('click', buildIndex);
+
+prevPage.addEventListener('click', () => { if(page>1){ page--; renderAll(); }});
+nextPage.addEventListener('click', () => { page++; renderAll(); });
+
+document.addEventListener('dragenter', (e) => { e.preventDefault(); dropOverlay.style.display = 'flex'; }, false);
+document.addEventListener('dragover', (e)=>{ e.preventDefault(); }, false);
+document.addEventListener('dragleave', (e)=>{ dropOverlay.style.display = 'none'; }, false);
+document.addEventListener('drop', (e)=>{ e.preventDefault(); dropOverlay.style.display='none'; handleDrop(e); }, false);
+
+/* -------------------------
+   Core functions
+------------------------- */
+
+function uid(){ return 'id_'+Math.random().toString(36).slice(2,10); }
+
+function saveToStorage(){
+  localStorage.setItem('cd_photos', JSON.stringify(photos));
+  // save albums map as object
+  const obj = {};
+  for(const [k,s] of albums) obj[k] = Array.from(s);
+  localStorage.setItem('cd_albums', JSON.stringify(obj));
+}
+
+function loadFromStorage(){
+  try{
+    photos = JSON.parse(localStorage.getItem('cd_photos') || '[]');
+    const albObj = JSON.parse(localStorage.getItem('cd_albums') || '{}');
+    albums = new Map();
+    for(const k of Object.keys(albObj)){
+      albums.set(k, new Set(albObj[k]));
     }
-
-    // File handling
-    document.querySelector('label[for="file-input"]').addEventListener('keydown', e=>{
-      if(e.key==='Enter'){ document.getElementById('file-input').click(); }
-    });
-    fileInput.addEventListener('change', async (e)=>{
-      const files = Array.from(e.target.files||[]);
-      if(!files.length) return;
-      fileCountEl.textContent = files.length + ' file(s) selected';
-      for(const f of files){ await addFilePhoto(f); }
-      fileInput.value = '';
-      fileCountEl.textContent = 'No files selected';
-    });
-
-    async function addFilePhoto(file){
-      if(!file.type.startsWith('image/')){ alertModal(\"\${file.name}" is not an image.\, true); return; }
-      const objectUrl = URL.createObjectURL(file);
-      const title = (fileTitle.value || file.name.replace(/\.[^/.]+$/,'')).trim();
-      const tags = (fileTags.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-      const meta = await readImageMeta(objectUrl).catch(()=>({w:null,h:null}));
-      const item = {
-        id: \img-\${Date.now()}-\${Math.random().toString(36).slice(2,9)}\,
-        title, tags,
-        src: objectUrl, file,
-        source: 'Local File',
-        order: ++lastOrder, addedBy: 'USER',
-        createdAt: Date.now(),
-        w: meta.w, h: meta.h,
-        type: file.type, size: file.size
-      };
-      gallery.push(item);
-      if(gallery.length===1){ currentId = item.id; }
-      refreshAll();
-      setStatus(\Added "\${title}"\);
+    // Ensure default album exists and contains all photo ids with no album
+    if(!albums.has('All Photos')) albums.set('All Photos', new Set());
+    // assign photo ids to albums if album missing
+    const existingIds = new Set(photos.map(p=>p.id));
+    for(const p of photos){
+      if(!p.album) p.album = 'All Photos';
+      if(!albums.has(p.album)) albums.set(p.album, new Set());
+      albums.get(p.album).add(p.id);
     }
-
-    // URL handling
-    addUrlBtn.addEventListener('click', addUrlPhoto);
-    imageUrl.addEventListener('keydown', e=>{ if(e.key==='Enter') addUrlPhoto(); });
-
-    async function addUrlPhoto(){
-      const title = urlTitle.value.trim();
-      const url = imageUrl.value.trim();
-      const tags = (urlTags.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-      if(!title || !url){ alertModal('Enter title and a valid image URL.', true); return; }
-      try{ new URL(url); }catch{ alertModal('Enter a valid URL.', true); return; }
-
-      const meta = await readImageMeta(url).catch(()=>({w:null,h:null}));
-      const item = {
-        id: \img-\${Date.now()}-\${Math.random().toString(36).slice(2,9)}\,
-        title, tags,
-        src: url,
-        source: 'URL',
-        order: ++lastOrder, addedBy: 'USER',
-        createdAt: Date.now(),
-        w: meta.w, h: meta.h,
-        type: guessTypeFromUrl(url), size: null
-      };
-      gallery.push(item);
-      if(gallery.length===1){ currentId = item.id; }
-      urlTitle.value = ''; urlTags.value=''; imageUrl.value='';
-      refreshAll();
-      setStatus(\Added "\${title}"\);
+    // Clean albums of nonexistent ids
+    for(const [k,s] of albums) {
+      for(const id of Array.from(s)) if(!existingIds.has(id)) s.delete(id);
     }
+  }catch(err){
+    console.error('load error',err);
+    photos = []; albums = new Map([['All Photos', new Set()]]);
+  }
+  buildIndex(); updateStats();
+}
 
-    function guessTypeFromUrl(u){
-      const m = u.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/); return m?('image/'+m[1].toLowerCase()):'image';
-    }
+function renderAll(){
+  renderAlbumList();
+  renderGallery();
+  updateSelectedUI();
+  saveToStorage();
+  updateStats();
+}
 
-    function readImageMeta(src){
-      return new Promise((resolve,reject)=>{
-        const img = new Image();
-        img.onload = ()=>resolve({w: img.naturalWidth, h: img.naturalHeight});
-        img.onerror = reject;
-        img.crossOrigin = 'anonymous';
-        img.src = src;
-      });
-    }
+function createAlbum(name){
+  if(albums.has(name)){ alert('Album already exists'); return; }
+  albums.set(name, new Set());
+  renderAlbumList();
+  saveToStorage();
+}
 
-    // Search & tags
-    searchEl.addEventListener('input', renderGallery);
-    quickTagEl.addEventListener('change', renderGallery);
-
-    function computeAllTags(){
-      const set = new Set();
-      gallery.forEach(g=>g.tags.forEach(t=>set.add(t)));
-      const current = quickTagEl.value;
-      quickTagEl.innerHTML = '<option value="">All tags</option>' +
-        Array.from(set).sort().map(t=><option value="${t}">${t}</option>).join('');
-      if(Array.from(set).includes(current)){ quickTagEl.value = current; }
-    }
-
-    // Controls
-    shuffleBtn.addEventListener('click', ()=>{
-      isShuffled = !isShuffled;
-      shuffleBtn.classList.toggle('text-accent-magenta', isShuffled);
-      shuffleBtn.classList.toggle('text-light-gray', !isShuffled);
-      setStatus(isShuffled?'Shuffle: On':'Shuffle: Off');
-    });
-    repeatBtn.addEventListener('click', ()=>{
-      isRepeating = !isRepeating;
-      repeatBtn.classList.toggle('text-accent-cyan', isRepeating);
-      repeatBtn.classList.toggle('text-light-gray', !isRepeating);
-      setStatus(isRepeating?'Repeat: On':'Repeat: Off');
-    });
-    nextBtn.addEventListener('click', ()=>nav(1));
-    prevBtn.addEventListener('click', ()=>nav(-1));
-
-    function nav(dir){
-      if(!gallery.length || !currentId) return;
-      const idx = gallery.findIndex(g=>g.id===currentId);
-      let nextIdx;
-      if(isShuffled){
-        do{ nextIdx = Math.floor(Math.random()*gallery.length); } while(gallery.length>1 && nextIdx===idx);
-      } else {
-        if(dir>0){ nextIdx = idx<gallery.length-1 ? idx+1 : 0; }
-        else { nextIdx = idx>0 ? idx-1 : gallery.length-1; }
+function renderAlbumList(){
+  albumList.innerHTML = '';
+  // show albums sorted by size descending
+  const arr = Array.from(albums.entries()).map(([name,set])=>({name,count:set.size}));
+  arr.sort((a,b)=> b.count - a.count || a.name.localeCompare(b.name));
+  for(const a of arr){
+    const li = document.createElement('li');
+    li.setAttribute('data-album', a.name);
+    li.className = 'flex items-center justify-between px-2 py-2 rounded-md hover:bg-white/2 cursor-pointer';
+    li.innerHTML = `<div><strong class="block">${a.name}</strong><span class="meta text-xs">${a.count} photos</span></div>
+                    <div class="flex gap-2"><button class="control btn-rename" data-album="${a.name}" title="Rename"><i class="fa fa-edit"></i></button>
+                    <button class="control btn-delete-album" data-album="${a.name}" title="Delete"><i class="fa fa-trash"></i></button></div>`;
+    albumList.appendChild(li);
+  }
+  // album control handlers
+  Array.from(albumList.querySelectorAll('.btn-delete-album')).forEach(b=>{
+    b.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const nm = b.dataset.album;
+      if(nm === 'All Photos'){ alert('Cannot delete base album'); return; }
+      if(confirm(`Delete album "${nm}"? photos will go to All Photos`)){
+        const ids = albums.get(nm) || new Set();
+        for(const id of ids){ const p = photos.find(x=>x.id===id); if(p){ p.album='All Photos'; albums.get('All Photos').add(id); } }
+        albums.delete(nm);
+        renderAll();
       }
-      currentId = gallery[nextIdx].id;
-      renderGallery();
-      updatePreview();
-      updateDLL();
-    }
-
-    removeBtn.addEventListener('click', ()=>{
-      if(!selectedId){ alertModal('Select a photo first.', true); return; }
-      const item = gallery.find(g=>g.id===selectedId);
-      confirmModal(\Remove "\${item?.title||'photo'}"?\, ()=>{
-        const i = gallery.findIndex(g=>g.id===selectedId);
-        if(i>-1){
-          const removed = gallery[i];
-          if(removed.file && removed.src) URL.revokeObjectURL(removed.src);
-          gallery.splice(i,1);
-          if(currentId===removed.id){
-            if(gallery.length){ currentId = gallery[Math.min(i, gallery.length-1)].id; } else { currentId = null; }
-          }
-          selectedId = null;
-          refreshAll();
-        }
-      });
     });
-
-    clearBtn.addEventListener('click', ()=>{
-      if(!gallery.length){ alertModal('Gallery is already empty.', true); return; }
-      confirmModal('Clear entire gallery?', ()=>{
-        gallery.forEach(g=>{ if(g.file && g.src) URL.revokeObjectURL(g.src); });
-        gallery = []; selectedId=null; currentId=null; lastOrder=0;
-        refreshAll(); setStatus('Gallery cleared');
-      });
+  });
+  Array.from(albumList.querySelectorAll('.btn-rename')).forEach(b=>{
+    b.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      const old = b.dataset.album;
+      const newName = prompt('Rename album:', old);
+      if(newName && newName !== old){
+        if(albums.has(newName)){ alert('Name exists'); return; }
+        const members = albums.get(old);
+        albums.set(newName, members);
+        albums.delete(old);
+        // update photo objects
+        for(const id of members){ const p = photos.find(x=>x.id===id); if(p) p.album = newName; }
+        if(currentAlbum === old) currentAlbum = newName;
+        renderAll();
+      }
     });
+  });
+}
 
-    // Preview controls
-    zoomSlider.addEventListener('input', ()=>{
-      zoom = parseFloat(zoomSlider.value); applyTransform();
-    });
-    fitBtn.addEventListener('click', ()=>{ zoom=1; rotation=0; zoomSlider.value='1'; applyTransform(); });
-    rotateLeftBtn.addEventListener('click', ()=>{ rotation = (rotation-90)%360; applyTransform(); });
-    rotateRightBtn.addEventListener('click', ()=>{ rotation = (rotation+90)%360; applyTransform(); });
+function renderGallery(){
+  // Filter by album
+  let ids = currentAlbum === 'All Photos' ? photos.map(p=>p.id) : Array.from(albums.get(currentAlbum) || []);
+  // Convert to photo objects
+  let list = ids.map(id => photos.find(p=>p.id===id)).filter(Boolean);
 
-    function applyTransform(){
-      const img = document.querySelector('#preview img');
-      if(img){ img.style.transform = \scale(\${zoom}) rotate(\${rotation}deg)\; }
+  // Tag filter
+  const tf = tagFilter.value.trim().toLowerCase();
+  if(tf){
+    const tags = tf.split(',').map(s=>s.trim()).filter(Boolean);
+    if(tags.length){
+      list = list.filter(p => tags.every(t => p.tags && p.tags.map(x=>x.toLowerCase()).includes(t)));
     }
+  }
 
-    // Rendering
-    function renderGallery(){
-      galleryEl.innerHTML = '';
-      if(!gallery.length){
-        galleryEl.innerHTML = '<p class="text-light-gray p-4 text-center col-span-full">The gallery is empty. Add some photos above!</p>';
-        galleryCountEl.textContent = '0';
-        return;
-      }
-      const term = searchEl.value.trim().toLowerCase();
-      const tag = quickTagEl.value;
-      const filtered = gallery.filter(g=>{
-        const hay = [g.title, g.type, ...(g.tags||[])].join(' ').toLowerCase();
-        const okTerm = term ? hay.includes(term) : true;
-        const okTag = tag ? (g.tags||[]).includes(tag) : true;
-        return okTerm && okTag;
-      });
+  // Search box (substring)
+  const q = searchBox.value.trim().toLowerCase();
+  if(q) {
+    // If index exists and query exact match attempt binary search
+    list = list.filter(p => p.name.toLowerCase().includes(q) || (p.tags||[]).some(t=>t.toLowerCase().includes(q)));
+  }
 
-      if(!filtered.length){
-        galleryEl.innerHTML = '<p class="text-light-gray p-4 text-center col-span-full">No results match your filters.</p>';
-      } else {
-        filtered.forEach(item=>{
-          const isCurrent = item.id===currentId;
-          const isSelected = item.id===selectedId;
-          const card = document.createElement('div');
-          card.className = \rounded-lg overflow-hidden relative \${isCurrent?'border-accent-cyan':'border-transparent'} \${isSelected?'ring-2 ring-white':''}\;
-          card.innerHTML = \`
-            <img src="\${item.src}" alt="\${item.title}" class="thumb w-full h-36">
-            <div class="p-2">
-              <div class="flex items-center justify-between">
-                <div class="truncate text-sm font-semibold">\${item.title||'Untitled'}</div>
-                <div>\${item.source==='Local File'
-                  ? '<span class="text-xxs bg-blue-500/80 text-white px-2 py-0.5 rounded-full border">FILE</span>'
-                  : '<span class="text-xxs bg-purple-500/80 text-white px-2 py-0.5 rounded-full border">URL</span>'}
-                </div>
-              </div>
-              <div class="text-xs text-light-gray truncate">\${(item.tags||[]).join(', ')||'—'}</div>
-            </div>
-            \${isCurrent?'<span class="absolute top-2 left-2 bg-[rgba(0,229,255,.18)] text-xs font-bold px-2 py-1 rounded-full current-chip glitch" data-text="CURRENT">CURRENT</span>':''}
-          \`;
-          card.addEventListener('click', ()=>{
-            selectedId = item.id;
-            removeBtn.disabled = false;
-            renderGallery();
-          });
-          card.addEventListener('dblclick', ()=>{
-            currentId = item.id;
-            if(!selectedId) removeBtn.disabled = true;
-            updatePreview(); updateDLL(); renderGallery();
-          });
-          galleryEl.appendChild(card);
-        });
-      }
-      galleryCountEl.textContent = String(gallery.length);
-    }
+  // Sort
+  const s = sortSelect.value;
+  list.sort((a,b)=>{
+    if(s==='date_desc') return (new Date(b.date || 0)) - (new Date(a.date || 0));
+    if(s==='date_asc') return (new Date(a.date || 0)) - (new Date(b.date || 0));
+    if(s==='name_asc') return a.name.localeCompare(b.name);
+    if(s==='name_desc') return b.name.localeCompare(a.name);
+    if(s==='size_asc') return (a.size||0) - (b.size||0);
+    if(s==='size_desc') return (b.size||0) - (a.size||0);
+    return 0;
+  });
 
-    function formatSize(bytes){
-      if(!bytes && bytes!==0) return '';
-      const k=1024; const sizes=['Bytes','KB','MB','GB']; const i=Math.floor(Math.log(bytes)/Math.log(k));
-      return \\${parseFloat((bytes/Math.pow(k,i)).toFixed(2))} \${sizes[i]}\;
-    }
+  // Pagination
+  const total = list.length;
+  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if(page > pages) page = pages;
+  const start = (page-1)*PAGE_SIZE;
+  const pageItems = list.slice(start, start+PAGE_SIZE);
 
-    function updatePreview(){
-      const wrap = document.getElementById('preview');
-      const item = gallery.find(g=>g.id===currentId);
-      const box = wrap.querySelector('.preview-box');
-      box.innerHTML = item ? \<img src="\${item.src}" alt="\${item.title}" class="max-w-full max-h-full transition-transform duration-200">\ : '<i class="fas fa-image text-5xl text-light-gray"></i>';
-      previewTitle.textContent = item ? (item.title||'Untitled') : '--';
-      const metaParts = [];
-      if(item){
-        if(item.w && item.h) metaParts.push(\\${item.w}×\${item.h}\);
-        if(item.type) metaParts.push(item.type);
-        if(item.size!=null) metaParts.push(formatSize(item.size));
-        metaParts.push(new Date(item.createdAt).toLocaleString());
-      }
-      previewMeta.textContent = item ? (metaParts.join(' • ')||'—') : '--';
-      previewSource.textContent = item ? \Source: \${item.source}\ : '';
-      downloadBtn.href = item ? item.src : '#';
-      downloadBtn.download = item ? (item.title||'photo') : '';
-      zoom=1; rotation=0; zoomSlider.value='1'; applyTransform();
-    }
+  pageInfo.textContent = `Showing ${start+1}-${start+pageItems.length} of ${total} photos | Page ${page} of ${pages}`;
 
-    function updateDLL(){
-      dllEl.innerHTML = '';
-      if(!gallery.length){
-        dllEl.innerHTML = \`
-          <div class="text-center"><div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border">Head</div><div class="text-light-gray mt-2">←→</div></div>
-          <div class="text-center"><div class="bg-light-gray text-dark-ink p-3 rounded-lg border">Empty</div><div class="text-light-gray mt-2">←→</div></div>
-          <div class="text-center"><div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border">Tail</div></div>
-        \`;
-        return;
-      }
-      dllEl.innerHTML += \<div class="text-center"><div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border">Head</div><div class="text-light-gray mt-2">←→</div></div>\;
-      gallery.forEach(item=>{
-        const isCurrent = item.id===currentId;
-        const sourceColor = item.source==='Local File' ? 'bg-blue-500' : 'bg-purple-500';
-        dllEl.innerHTML += \`
-          <div class="text-center">
-            <div class="\${isCurrent?'bg-accent-cyan text-white pulse':'bg-white text-dark-ink'} p-3 rounded-lg font-medium max-w-xs truncate relative border" title="\${item.title}">
-              \${item.title}
-              <span class="absolute -top-1 -right-1 w-3 h-3 \${sourceColor} rounded-full"></span>
-            </div>
-            <div class="text-light-gray mt-2">←→</div>
+  // render items
+  galleryGrid.innerHTML = '';
+  for(const p of pageItems){
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+    card.dataset.id = p.id;
+    card.innerHTML = `
+      <div class="relative">
+        <img src="${p.src}" alt="${p.name}" loading="lazy" />
+        <div style="position:absolute; left:8px; top:8px;"><span class="badge">${p.album}</span></div>
+        <div style="position:absolute; right:8px; top:8px;">
+          <input type="checkbox" class="select-checkbox" ${selected.has(p.id)?'checked':''}/>
+        </div>
+      </div>
+      <div class="p-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-sm font-semibold" title="${p.name}">${p.name}</div>
+            <div class="meta text-xs">${p.date || 'Unknown date'}</div>
           </div>
-        \`;
-      });
-      dllEl.innerHTML += \<div class="text-center"><div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border">Tail</div>\${gallery.length>1?'<div class="text-light-gray mt-2">↻ Circular</div>':''}</div>\;
-    }
+          <div class="text-sm meta">${formatSize(p.size||0)}</div>
+        </div>
+        <div class="mt-3 flex gap-2">
+          ${(p.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join(' ')}
+        </div>
+      </div>`;
+    galleryGrid.appendChild(card);
 
-    function refreshAll(){
-      computeAllTags();
-      renderGallery();
-      updatePreview();
-      updateDLL();
-    }
+    // handlers
+    card.querySelector('img').addEventListener('click', ()=> openModal(p.id));
+    card.querySelector('.select-checkbox').addEventListener('change', (e)=>{
+      if(e.target.checked) selected.add(p.id); else selected.delete(p.id);
+      updateSelectedUI();
+    });
 
-    // Modal helpers
-    function alertModal(msg, isAlert=false){
-      modalMsg.textContent = msg;
-      modal.classList.remove('hidden'); modal.classList.add('flex');
-      modalCancel.classList.toggle('hidden', isAlert);
-      modalConfirm.textContent = isAlert ? 'OK' : 'Confirm';
-      const onConfirm = ()=>{ closeModal(); };
-      modalConfirm.onclick = onConfirm;
-      modalCancel.onclick = closeModal;
-    }
-    function confirmModal(msg, onConfirm){
-      modalMsg.textContent = msg;
-      modal.classList.remove('hidden'); modal.classList.add('flex');
-      modalCancel.classList.remove('hidden');
-      modalConfirm.textContent = 'Confirm';
-      modalConfirm.onclick = ()=>{ onConfirm(); closeModal(); };
-      modalCancel.onclick = closeModal;
-    }
-    function closeModal(){
-      modal.classList.add('hidden'); modal.classList.remove('flex');
-      modalConfirm.onclick = null; modalCancel.onclick = null;
-    }
+    // drag into album support from photo card
+    card.draggable = true;
+    card.addEventListener('dragstart', (ev)=> { ev.dataTransfer.setData('text/photo-id', p.id); });
+    card.addEventListener('dblclick', ()=> openModal(p.id));
+  }
+}
 
-    // Demo samples (hotlink-friendly)
-    const samplePhotos = [
-      { title:'Mountains', url:'https://images.unsplash.com/photo-1501785888041-af3ef285b470' },
-      { title:'Forest', url:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixid=2' },
-      { title:'Beach', url:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e' },
-    ];
-    async function init(){
-      for(let i=0;i<2;i++){
-        const s = samplePhotos[i];
-        const meta = await readImageMeta(s.url).catch(()=>({w:null,h:null}));
-        gallery.push({
-          id:\img-\${Date.now()}-\${Math.random().toString(36).slice(2,9)}\,
-          title:s.title, tags:['sample'],
-          src:s.url, source:'URL', order: ++lastOrder, addedBy:'SYSTEM',
-          createdAt: Date.now(), w: meta.w, h: meta.h, type: guessTypeFromUrl(s.url), size: null
+function updateSelectedUI(){
+  selectedCount.textContent = `${selected.size} selected`;
+}
+
+function formatSize(bytes){
+  if(bytes < 1024) return bytes+' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1)+' KB';
+  return (bytes/1024/1024).toFixed(2)+' MB';
+}
+
+/* -------------------------
+   Upload & parsing
+------------------------- */
+function handleFileUpload(e){
+  const files = Array.from(e.target.files || e);
+  if(files.length === 0) return;
+  const albumName = currentAlbum || 'All Photos';
+  files.forEach(file => {
+    if(!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const id = uid();
+      const obj = {
+        id, src: ev.target.result, name: file.name, size: file.size, date: new Date().toLocaleString(),
+        tags: [], album: albumName, exif: {}
+      };
+      photos.push(obj);
+      if(!albums.has(albumName)) albums.set(albumName, new Set());
+      albums.get(albumName).add(id);
+      // read exif
+      try{
+        EXIF.getData(file, function(){
+          const all = EXIF.getAllTags(this);
+          obj.exif = all;
+          saveToStorage(); // save exif
         });
-      }
-      currentId = gallery[0]?.id || null;
-      refreshAll();
+      }catch(err){}
+      renderAll();
+    };
+    reader.readAsDataURL(file);
+  });
+  // reset input
+  if(e.target) e.target.value = '';
+}
+
+function handleDrop(e){
+  const items = Array.from(e.dataTransfer.files || []);
+  handleFileUpload(items);
+}
+
+async function handleUrlUpload(){
+  const url = prompt('Enter direct image URL (must be CORS-allowed):');
+  if(!url) return;
+  try{
+    // try fetch and convert to blob (gives size)
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const id = uid();
+      const name = url.split('/').pop().split('?')[0] || 'remote.jpg';
+      const obj = { id, src: ev.target.result, name, size: blob.size, date: new Date().toLocaleString(), tags: [], album: currentAlbum||'All Photos', exif:{}};
+      photos.push(obj);
+      if(!albums.has(obj.album)) albums.set(obj.album, new Set());
+      albums.get(obj.album).add(id);
+      renderAll();
+    };
+    reader.readAsDataURL(blob);
+  }catch(err){
+    alert('Unable to fetch image (CORS or network). You can instead download and upload file directly.');
+  }
+}
+
+/* -------------------------
+   Modal & single actions
+------------------------- */
+let watermarkOn = false;
+function openModal(id){
+  const p = photos.find(x=>x.id===id);
+  if(!p) return;
+  modalImage.src = p.src;
+  modalName.textContent = p.name;
+  modalMeta.innerHTML = `<div class="meta">Album: ${p.album} • Size: ${formatSize(p.size||0)} • Date: ${p.date}</div>`;
+  modalTags.innerHTML = '';
+  (p.tags||[]).forEach(t=>{
+    const sp = document.createElement('span');
+    sp.className='tag';
+    sp.textContent = t;
+    modalTags.appendChild(sp);
+  });
+  exifData.textContent = JSON.stringify(p.exif || {}, null, 2);
+  modal.classList.add('show');
+  // toggle watermark button toggles overlay for download view (not persistent)
+  toggleWatermark.onclick = ()=>{
+    watermarkOn = !watermarkOn;
+    if(watermarkOn){
+      // simple watermark drawn on canvas if user downloads
+      alert('Watermark will be applied on download preview (client-side).');
+    }else{
+      alert('Watermark off.');
     }
-    document.addEventListener('DOMContentLoaded', init);
-  </script>
+  };
+  downloadSingle.onclick = ()=> downloadImage(p);
+}
+closeModal.addEventListener('click', ()=> modal.classList.remove('show'));
+modal.addEventListener('click', (e)=> { if(e.target === modal) modal.classList.remove('show'); });
+
+function downloadImage(photo){
+  // create a link
+  const a = document.createElement('a');
+  a.href = photo.src;
+  a.download = photo.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/* -------------------------
+   Bulk actions
+------------------------- */
+function bulkDelete(){
+  if(selected.size === 0){ alert('Select photos first'); return; }
+  if(!confirm(`Delete ${selected.size} selected photos?`)) return;
+  const deleted = [];
+  for(const id of Array.from(selected)){
+    const idx = photos.findIndex(p=>p.id===id);
+    if(idx>=0){
+      deleted.push(photos[idx]);
+      // remove from album sets
+      if(albums.has(photos[idx].album)) albums.get(photos[idx].album).delete(id);
+      photos.splice(idx,1);
+      selected.delete(id);
+    }
+  }
+  undoStack.push({type:'delete', items:deleted});
+  renderAll();
+}
+
+function bulkDownload(){
+  if(selected.size === 0){ alert('Select photos first'); return; }
+  for(const id of selected){
+    const p = photos.find(x=>x.id === id);
+    if(p) downloadImage(p);
+  }
+}
+
+function bulkMove(){
+  if(selected.size === 0){ alert('Select photos first'); return; }
+  const dest = prompt('Move selected photos to album (existing or new):', 'All Photos');
+  if(!dest) return;
+  if(!albums.has(dest)) albums.set(dest, new Set());
+  for(const id of Array.from(selected)){
+    const p = photos.find(x=>x.id===id);
+    if(p){
+      // remove from old album
+      if(albums.has(p.album)) albums.get(p.album).delete(p.id);
+      p.album = dest;
+      albums.get(dest).add(p.id);
+    }
+  }
+  selected.clear(); renderAll();
+}
+
+function bulkTag(){
+  if(selected.size === 0){ alert('Select photos first'); return; }
+  const t = prompt('Add tags (comma separated):');
+  if(!t) return;
+  const tags = t.split(',').map(x=>x.trim()).filter(Boolean);
+  for(const id of selected){
+    const p = photos.find(x=>x.id===id);
+    if(p){
+      if(!p.tags) p.tags = [];
+      for(const tg of tags) if(!p.tags.includes(tg)) p.tags.push(tg);
+    }
+  }
+  selected.clear(); renderAll();
+}
+
+/* -------------------------
+   Undo & clear
+------------------------- */
+function undoDelete(){
+  if(undoStack.length === 0){ alert('Nothing to undo'); return; }
+  const op = undoStack.pop();
+  if(op.type === 'delete'){
+    for(const p of op.items){
+      photos.push(p);
+      if(!albums.has(p.album)) albums.set(p.album, new Set());
+      albums.get(p.album).add(p.id);
+    }
+    renderAll();
+  }
+}
+
+function clearAllData(){
+  if(!confirm('This will remove ALL saved photos and albums. Continue?')) return;
+  photos = []; albums = new Map([['All Photos', new Set()]]);
+  undoStack = [];
+  selected.clear();
+  saveToStorage(); renderAll();
+}
+
+/* -------------------------
+   Indexing & search (binary search example)
+------------------------- */
+function buildIndex(){
+  indexArr = photos.map(p=>({nameLower: p.name.toLowerCase(), id: p.id}));
+  indexArr.sort((a,b)=> a.nameLower.localeCompare(b.nameLower));
+  indexInfo.textContent = `Index built (${indexArr.length} items) — ready for binary search.`;
+}
+
+function quickSearch(){
+  const q = searchBox.value.trim().toLowerCase();
+  if(!q) { alert('Type name to search and press Enter'); return; }
+  if(indexArr.length === 0){ buildIndex(); }
+  // binary search for exact match
+  let l=0, r=indexArr.length-1, found=[];
+  while(l<=r){
+    const mid = Math.floor((l+r)/2);
+    const name = indexArr[mid].nameLower;
+    if(name === q){ found.push(indexArr[mid].id); break; }
+    if(name < q) l = mid +1; else r = mid -1;
+  }
+  // Also include partial matches by scanning neighbors
+  if(found.length === 0){
+    // fallback to substring search
+    const matches = indexArr.filter(it => it.nameLower.includes(q)).map(it=>it.id);
+    if(matches.length === 0){ alert('No matches'); return; }
+    // show in album
+    // show matched items across all photos
+    currentAlbum = 'All Photos';
+    // filter via temporary tagFilter and searchBox
+    searchBox.value = q;
+    page = 1;
+    renderAll();
+  } else {
+    searchBox.value = q;
+    page = 1;
+    renderAll();
+  }
+}
+
+/* -------------------------
+   Utilities & stats
+------------------------- */
+function updateStats(){
+  const total = photos.length;
+  const albumCounts = Array.from(albums.entries()).map(([k,s])=>({k,c:s.size}));
+  const topAlbum = albumCounts.sort((a,b)=>b.c - a.c)[0] || {k:'All Photos', c:0};
+  statsBlock.innerHTML = `Photos: <strong>${total}</strong><br/>Albums: <strong>${albums.size}</strong><br/>Top album: <strong>${topAlbum.k} (${topAlbum.c})</strong>`;
+}
+
+/* -------------------------
+   Drag photo into album (droppable albums)
+------------------------- */
+albumList.addEventListener('dragover', (e)=> e.preventDefault());
+albumList.addEventListener('drop', (e)=>{
+  e.preventDefault();
+  const id = e.dataTransfer.getData('text/photo-id');
+  const li = e.target.closest('li[data-album]');
+  if(!li) return;
+  const album = li.dataset.album;
+  const p = photos.find(x=>x.id===id);
+  if(p){
+    if(albums.has(p.album)) albums.get(p.album).delete(p.id);
+    p.album = album;
+    if(!albums.has(album)) albums.set(album, new Set());
+    albums.get(album).add(p.id);
+    renderAll();
+  }
+});
+
+/* -------------------------
+   Helpers for initial demo (load sample images if empty)
+------------------------- */
+if(photos.length === 0){
+  // load a few sample remote images (CORS-friendly Unsplash images)
+  const sampleUrls = [
+    'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1499084732479-de2c02d45fc4?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80'
+  ];
+  (async ()=>{
+    for(const url of sampleUrls){
+      try{
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const reader = new FileReader();
+        await new Promise((resolve)=> {
+          reader.onload = (ev)=> {
+            const id = uid(); const name = url.split('/').pop().split('?')[0];
+            const obj = {id, src: ev.target.result, name, size: blob.size, date: new Date().toLocaleString(), tags:[], album:'All Photos', exif:{}};
+            photos.push(obj); albums.get('All Photos').add(id);
+            resolve();
+          };
+          reader.readAsDataURL(blob);
+        });
+      }catch(err){}
+    }
+    renderAll();
+  })();
+}
+
+function updateSelectedUI(){ selectedCount.textContent = `${selected.size} selected`; }
+
+/* Save periodically */
+setInterval(()=> saveToStorage(), 2000);
+
+</script>
+
 </body>
 </html>
+
