@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello, World!</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+      <h1 class="title">Hello World! </h1>
+      <p id="currentTime"></p>
+      <script src="script.js"></script>
+  </body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Universal Photos Manager — Glitch</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          'accent-green':'#9eff00',
+          'accent-cyan':'#00e5ff',
+          'accent-magenta':'#ff2bd6',
+          'dark-ink':'#0a0b10',
+          'dark-gray':'#0f1020',
+          'light-gray':'#8a90a6',
+        },
+      },
+    },
+  }
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+  body { font-family: 'Inter', sans-serif; color: #e8eaf6; }
+
+  /* Glitch theme background: scanlines + grain + gradients */
+  :root{
+    --bg-0:#0a0b10;
+    --bg-1:#0f1020;
+    --neon-1:#00e5ff;
+    --neon-2:#ff2bd6;
+    --neon-3:#9eff00;
+    --ink:#e8eaf6;
+    --muted:#8a90a6;
+  }
+  body{
+    background: radial-gradient(1200px 800px at 20% 10%, #12142a 0%, transparent 60%),
+                radial-gradient(900px 700px at 80% 80%, #10142b 0%, transparent 60%),
+                linear-gradient(180deg, #0a0b10, #0e1020);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  body::before, body::after{
+    content:'';
+    position: fixed; inset:0; pointer-events:none; z-index:0;
+  }
+  body::before{
+    background: repeating-linear-gradient( to bottom, rgba(255,255,255,0.03) 0 2px, rgba(0,0,0,0.03) 2px 4px );
+    mix-blend-mode: soft-light; opacity:.5;
+  }
+  body::after{
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity="0.05"/></svg>');
+    opacity:.6; animation: grain 8s steps(10) infinite;
+  }
+  @keyframes grain{
+    0%{transform:translate(0,0)} 10%{transform:translate(-1%,1%)} 20%{transform:translate(-2%,-1%)} 30%{transform:translate(1%,2%)}
+    40%{transform:translate(1%,-2%)} 50%{transform:translate(-1%,2%)} 60%{transform:translate(-2%,1%)} 70%{transform:translate(2%,1%)}
+    80%{transform:translate(-1%,-1%)} 90%{transform:translate(1%,-2%)} 100%{transform:translate(0,0)}
+  }
+
+  /* Holo glass containers */
+  .glass{
+    background: linear-gradient(180deg, rgba(18,22,44,.55), rgba(10,12,20,.55));
+    border: 1px solid rgba(0,229,255,.15);
+    box-shadow: 0 10px 30px rgba(0,0,0,.4), inset 0 0 0 1px rgba(255,255,255,.04);
+    position: relative; z-index:1;
+  }
+  .scroll-y { max-height: 60vh; overflow-y: auto; scrollbar-width: thin; }
+  .scroll-y::-webkit-scrollbar { width: 6px; }
+  .scroll-y::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 10px; }
+
+  /* Tabs */
+  .tab-btn { padding: 10px 20px; border-radius: 8px 8px 0 0; background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06); color: var(--muted); transition: .3s; }
+  .tab-btn.active{
+    background: linear-gradient(90deg, rgba(0,229,255,.15), rgba(255,43,214,.15));
+    border-color: rgba(0,229,255,.35);
+    color: var(--ink);
+    text-shadow: 0 0 8px rgba(0,229,255,.6);
+  }
+  .tab { display: none; }
+  .tab.active { display: block; }
+
+  /* Buttons: neon split hover */
+  .btn{
+    transition: .2s; position: relative; overflow:hidden;
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 0 0 0 rgba(0,229,255,0);
+  }
+  .btn:hover{ transform: translateY(-1px); box-shadow: 0 0 20px rgba(0,229,255,.25), 0 0 35px rgba(255,43,214,.15) inset; }
+  .btn:active{ transform: translateY(0); }
+  .btn::before, .btn::after{
+    content:''; position:absolute; inset:0; mix-blend-mode:screen; pointer-events:none; opacity:0; transition:.2s;
+  }
+  .btn::before{ background: linear-gradient(90deg, transparent, rgba(0,229,255,.25), transparent); transform: translateX(-100%); }
+  .btn::after{ background: linear-gradient(90deg, transparent, rgba(255,43,214,.2), transparent); transform: translateX(100%); }
+  .btn:hover::before{ opacity:1; transform: translateX(0); }
+  .btn:hover::after{ opacity:1; transform: translateX(0); }
+
+  .file-input{ display:none; }
+  .file-label{ cursor:pointer; display:inline-block; padding:12px 24px; background:#00e5ff; color:#031018; border-radius:8px; transition:.2s; border:1px solid rgba(255,255,255,.1); }
+  .file-label:hover{ filter: drop-shadow(0 0 10px rgba(0,229,255,.4)); }
+
+  /* Inputs */
+  input, select{
+    background: #111226 !important;
+    border-color: rgba(0,229,255,.15) !important;
+    color: var(--ink) !important;
+    box-shadow: inset 0 0 12px rgba(0,0,0,.35);
+  }
+
+  /* Gallery cards */
+  #gallery .rounded-lg{
+    border: 1px solid rgba(255,255,255,.05);
+    background: linear-gradient(180deg, rgba(16,18,36,.75), rgba(12,13,25,.75));
+    transition: transform .15s ease, box-shadow .15s ease, filter .2s ease;
+    position: relative;
+  }
+  #gallery .rounded-lg:hover{
+    transform: translateY(-2px);
+    filter: drop-shadow(0 0 10px rgba(0,229,255,.18));
+  }
+  .thumb{ aspect-ratio: 1/1; object-fit: cover; filter: saturate(1.1) contrast(1.05); }
+  #gallery .rounded-lg:hover img{
+    filter: contrast(1.12) saturate(1.2) drop-shadow(0 0 8px rgba(0,229,255,.25));
+    transform: translateZ(0);
+  }
+  #gallery .rounded-lg:hover::after{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background: linear-gradient(to right, rgba(0,229,255,.08), rgba(255,43,214,.08));
+    mix-blend-mode: screen;
+  }
+
+  /* Status and badges */
+  #status{ color: var(--neon-3); text-shadow: 0 0 6px rgba(158,255,0,.5); }
+  .current-chip{
+    box-shadow: 0 0 10px rgba(0,229,255,.5);
+    border: 1px solid rgba(0,229,255,.35);
+  }
+
+  /* Preview frame */
+  #preview .preview-box{
+    width: 16rem; height: 16rem; background: #0d0f1b;
+    border: 1px solid rgba(0,229,255,.18);
+    box-shadow: inset 0 0 40px rgba(0,229,255,.06);
+  }
+
+  /* Glitch text utility */
+  .glitch{
+    position: relative; display:inline-block;
+    text-shadow: 0 0 8px rgba(0,229,255,.6);
+  }
+  .glitch::before, .glitch::after{
+    content: attr(data-text);
+    position:absolute; left:0; top:0; clip-path: inset(0 0 0 0);
+  }
+  .glitch::before{
+    color: var(--neon-2); transform: translate(1px, 0); mix-blend-mode:screen;
+    animation: glitchShift 2s infinite cubic-bezier(.25,.46,.45,.94);
+  }
+  .glitch::after{
+    color: var(--neon-1); transform: translate(-1px, 0); mix-blend-mode:screen;
+    animation: glitchShift 1.7s infinite reverse cubic-bezier(.25,.46,.45,.94);
+  }
+  @keyframes glitchShift{
+    0%{ clip-path: inset(0 0 90% 0); }
+    10%{ clip-path: inset(10% 0 70% 0); transform: translate(-2px,1px); }
+    20%{ clip-path: inset(40% 0 40% 0); transform: translate(2px,-1px); }
+    30%{ clip-path: inset(80% 0 5% 0); }
+    40%{ clip-path: inset(50% 0 30% 0); }
+    50%{ clip-path: inset(0 0 90% 0); }
+    60%{ clip-path: inset(60% 0 20% 0); }
+    70%{ clip-path: inset(30% 0 50% 0); }
+    80%{ clip-path: inset(10% 0 70% 0); }
+    90%{ clip-path: inset(0 0 90% 0); }
+    100%{ clip-path: inset(0 0 90% 0); }
+  }
+
+  /* Flicker animation reuse */
+  .pulse{ animation: flick 2.2s infinite; }
+  @keyframes flick{
+    0%,100%{ opacity:1; filter:none; }
+    45%{ opacity:.95; filter: hue-rotate(5deg) drop-shadow(0 0 6px rgba(0,229,255,.4)); }
+    50%{ opacity:.85; filter: hue-rotate(-5deg) drop-shadow(0 0 10px rgba(255,43,214,.4)); }
+    55%{ opacity:.95; }
+  }
+
+  /* Slider styling */
+  .slider { -webkit-appearance: none; height: 4px; background: rgba(255,255,255,.25); border-radius: 2px; outline: none; }
+  .slider::-webkit-slider-thumb{ -webkit-appearance:none; width:12px; height:12px; background:#00e5ff; border-radius:50%; cursor:pointer; }
+</style>
+</head>
+<body class="p-4 sm:p-8">
+  <div id="app" class="max-w-6xl mx-auto">
+    <header class="mb-8 p-6 glass rounded-2xl shadow-xl">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div>
+          <h1 class="text-3xl font-extrabold mb-1 flex items-center">
+            <i class="fas fa-images text-accent-cyan mr-3"></i>
+            <span class="glitch" data-text="Universal Photos Manager">Universal Photos Manager</span>
+          </h1>
+          <p class="text-light-gray">Doubly Linked & Circular Gallery</p>
+        </div>
+        <div class="bg-dark-gray p-3 rounded-lg border border-[rgba(255,255,255,.08)]">
+          <div class="text-sm text-light-gray truncate">
+            <span class="font-semibold">User ID:</span> <span id="user-id" class="text-white">PHOTO_USER</span>
+          </div>
+          <div class="text-sm text-light-gray">
+            <span class="font-semibold">Status:</span> <span id="status" class="text-[var(--neon-3)]">Ready</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+      <div class="lg:w-2/3 flex flex-col gap-8">
+        <section class="p-6 glass rounded-2xl shadow-xl">
+          <h2 class="text-xl font-bold mb-4"><span class="glitch" data-text="Add Photos">Add Photos</span></h2>
+          <div class="flex mb-4">
+            <button id="file-tab" class="tab-btn active mr-2"><i class="fas fa-file-image mr-2"></i>From Files</button>
+            <button id="url-tab" class="tab-btn"><i class="fas fa-link mr-2"></i>From URL</button>
+          </div>
+
+          <div id="file-tab-content" class="tab active">
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col sm:flex-row gap-4">
+                <input id="file-title" type="text" placeholder="Title (optional)" class="flex-grow p-3 rounded-lg border">
+                <input id="file-tags" type="text" placeholder="Tags, comma-separated (optional)" class="flex-grow p-3 rounded-lg border">
+              </div>
+              <div class="flex flex-col sm:flex-row gap-4 items-center">
+                <label for="file-input" class="file-label"><i class="fas fa-file-upload mr-2"></i>Select Images</label>
+                <input id="file-input" class="file-input" type="file" accept="image/*" multiple>
+                <span id="file-count" class="text-light-gray text-sm">No files selected</span>
+              </div>
+              <p class="text-xs text-light-gray">Supported: JPG, PNG, GIF, WebP, BMP, TIFF, HEIC (browser support varies)</p>
+            </div>
+          </div>
+
+          <div id="url-tab-content" class="tab">
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col sm:flex-row gap-4">
+                <input id="url-title" type="text" placeholder="Title (required)" class="flex-grow p-3 rounded-lg border">
+                <input id="url-tags" type="text" placeholder="Tags, comma-separated (optional)" class="flex-grow p-3 rounded-lg border">
+              </div>
+              <div class="flex flex-col sm:flex-row gap-4">
+                <input id="image-url" type="url" placeholder="Image URL (https://...)" class="flex-grow p-3 rounded-lg border">
+                <button id="add-url-btn" type="button" class="btn bg-[rgba(0,229,255,.1)] text-white font-semibold py-3 px-6 rounded-lg">
+                  <span class="flex items-center justify-center"><i class="fas fa-plus mr-2"></i>Add from URL</span>
+                </button>
+              </div>
+              <p class="text-xs text-light-gray">Use any publicly accessible image URL. Some CDNs block CORS for dimensions probing.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="p-6 glass rounded-2xl shadow-xl flex-grow">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold"><span class="glitch" data-text="Gallery">Gallery</span></h2>
+            <div class="text-light-gray text-sm"><span id="gallery-count">0</span> photos</div>
+          </div>
+
+          <div class="mb-4 flex flex-col md:flex-row gap-3">
+            <input id="search" type="text" placeholder="Search title, tags, type..." class="flex-grow p-3 rounded-lg border">
+            <select id="quick-tag" class="p-3 rounded-lg border">
+              <option value="">All tags</option>
+            </select>
+          </div>
+
+          <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 scroll-y rounded-lg p-2">
+            <p class="text-light-gray p-4 text-center col-span-full">No photos yet. Add some above!</p>
+          </div>
+        </section>
+      </div>
+
+      <div class="lg:w-1/3 flex flex-col gap-8">
+        <section class="p-6 glass rounded-2xl shadow-xl">
+          <h2 class="text-xl font-bold mb-4"><span class="glitch" data-text="Preview">Preview</span></h2>
+          <div id="preview" class="text-center">
+            <div class="mb-4 flex justify-center">
+              <div class="preview-box rounded-xl overflow-hidden flex items-center justify-center">
+                <i class="fas fa-image text-5xl text-light-gray"></i>
+              </div>
+            </div>
+            <div class="mb-2">
+              <p id="preview-title" class="text-2xl font-bold truncate">--</p>
+              <p id="preview-meta" class="text-light-gray text-sm truncate">--</p>
+              <p id="preview-source" class="text-xs text-light-gray mt-1"></p>
+            </div>
+
+            <div class="flex justify-center items-center mt-4 gap-3">
+              <button id="fit-btn" class="btn text-light-gray hover:text-white"><i class="fas fa-expand"></i></button>
+              <button id="rotate-left-btn" class="btn text-light-gray hover:text-white"><i class="fas fa-rotate-left"></i></button>
+              <button id="rotate-right-btn" class="btn text-light-gray hover:text-white"><i class="fas fa-rotate-right"></i></button>
+              <a id="download-btn" class="btn text-white bg-dark-gray px-3 py-2 rounded-lg hover:bg-gray-700 border" download><i class="fas fa-download"></i></a>
+            </div>
+
+            <div class="flex items-center justify-center mt-4 gap-3">
+              <i class="fas fa-magnifying-glass-minus text-light-gray"></i>
+              <input id="zoom-slider" type="range" min="0.25" max="3" step="0.05" value="1" class="slider w-40">
+              <i class="fas fa-magnifying-glass-plus text-light-gray"></i>
+            </div>
+          </div>
+        </section>
+
+        <section class="p-6 glass rounded-2xl shadow-xl">
+          <h2 class="text-xl font-bold mb-4"><span class="glitch" data-text="Gallery Controls">Gallery Controls</span></h2>
+          <div class="space-y-4">
+            <button id="clear-btn" class="btn w-full bg-red-500/80 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-600">
+              <span class="flex items-center justify-center"><i class="fas fa-trash mr-2"></i>Clear Gallery</span>
+            </button>
+            <div class="pt-4 border-t border-[rgba(255,255,255,.08)]">
+              <p class="text-sm text-light-gray mb-2">Click a photo to select it, then use remove.</p>
+              <button id="remove-btn" class="btn w-full bg-dark-gray text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-700 border" disabled>
+                <span class="flex items-center justify-center"><i class="fas fa-minus-circle mr-2"></i>Remove Selected Photo</span>
+              </button>
+            </div>
+            <div class="pt-4 border-t border-[rgba(255,255,255,.08)] flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <button id="shuffle-btn" class="btn text-light-gray hover:text-accent-magenta"><i class="fas fa-random text-xl"></i></button>
+                <button id="prev-btn" class="btn text-white bg-dark-gray p-3 rounded-full hover:bg-gray-700 border"><i class="fas fa-arrow-left"></i></button>
+                <button id="next-btn" class="btn text-white bg-dark-gray p-3 rounded-full hover:bg-gray-700 border"><i class="fas fa-arrow-right"></i></button>
+                <button id="repeat-btn" class="btn text-light-gray hover:text-accent-cyan"><i class="fas fa-redo text-xl"></i></button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <section class="mt-8 p-6 glass rounded-2xl shadow-xl">
+      <h2 class="text-xl font-bold mb-4"><span class="glitch" data-text="Gallery Data Structure">Gallery Data Structure</span></h2>
+      <div class="bg-[#0d0f1b] p-4 rounded-lg border border-[rgba(0,229,255,.18)]">
+        <div id="dll-visual" class="flex flex-wrap justify-center gap-4">
+          <div class="text-center">
+            <div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border border-[rgba(255,255,255,.08)]">Head</div>
+            <div class="text-light-gray mt-2">←→</div>
+          </div>
+          <div class="text-center">
+            <div class="bg-light-gray text-dark-ink p-3 rounded-lg border border-[rgba(255,255,255,.08)]">Empty</div>
+            <div class="text-light-gray mt-2">←→</div>
+          </div>
+          <div class="text-center">
+            <div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border border-[rgba(255,255,255,.08)]">Tail</div>
+          </div>
+        </div>
+        <div class="mt-4 text-center text-light-gray text-sm">
+          <p>This gallery uses a <span class="font-bold text-white">Doubly Linked List</span> for navigation</p>
+          <p class="mt-1">and a <span class="font-bold text-white">Circular List</span> for seamless looping</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+    <div class="bg-dark-gray p-6 rounded-2xl shadow-2xl max-w-sm w-full border border-[rgba(255,255,255,.12)]">
+      <h3 class="text-xl font-bold mb-4"><span class="glitch" data-text="Action Required">Action Required</span></h3>
+      <p id="modal-msg" class="text-light-gray mb-6"></p>
+      <div class="flex justify-end space-x-3">
+        <button id="modal-cancel" type="button" class="px-4 py-2 bg-light-gray/20 rounded-lg hover:bg-light-gray/30 text-white font-semibold border">Cancel</button>
+        <button id="modal-confirm" type="button" class="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600 text-white font-semibold border">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let gallery = [];         // {id,title,tags[],src,file?,source,order,addedBy,createdAt,w?,h?,type?,size?}
+    let selectedId = null;
+    let currentId = null;
+    let lastOrder = 0;
+    let isShuffled = false;
+    let isRepeating = false;
+    let zoom = 1;
+    let rotation = 0;
+
+    // Elements
+    const statusEl = document.getElementById('status');
+    const galleryCountEl = document.getElementById('gallery-count');
+    const galleryEl = document.getElementById('gallery');
+    const dllEl = document.getElementById('dll-visual');
+
+    const fileTab = document.getElementById('file-tab');
+    const urlTab = document.getElementById('url-tab');
+    const fileTabContent = document.getElementById('file-tab-content');
+    const urlTabContent = document.getElementById('url-tab-content');
+
+    const fileInput = document.getElementById('file-input');
+    const fileCountEl = document.getElementById('file-count');
+    const fileTitle = document.getElementById('file-title');
+    const fileTags = document.getElementById('file-tags');
+
+    const urlTitle = document.getElementById('url-title');
+    const urlTags = document.getElementById('url-tags');
+    const imageUrl = document.getElementById('image-url');
+    const addUrlBtn = document.getElementById('add-url-btn');
+
+    const searchEl = document.getElementById('search');
+    const quickTagEl = document.getElementById('quick-tag');
+
+    const removeBtn = document.getElementById('remove-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const shuffleBtn = document.getElementById('shuffle-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const repeatBtn = document.getElementById('repeat-btn');
+
+    const previewTitle = document.getElementById('preview-title');
+    const previewMeta = document.getElementById('preview-meta');
+    const previewSource = document.getElementById('preview-source');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const fitBtn = document.getElementById('fit-btn');
+    const rotateLeftBtn = document.getElementById('rotate-left-btn');
+    const rotateRightBtn = document.getElementById('rotate-right-btn');
+    const downloadBtn = document.getElementById('download-btn');
+
+    const modal = document.getElementById('modal');
+    const modalMsg = document.getElementById('modal-msg');
+    const modalConfirm = document.getElementById('modal-confirm');
+    const modalCancel = document.getElementById('modal-cancel');
+
+    function setStatus(msg){ statusEl.textContent = msg; setTimeout(()=>statusEl.textContent='Ready', 3000); }
+
+    // Tabs
+    fileTab.addEventListener('click', ()=>switchTab('file'));
+    urlTab.addEventListener('click', ()=>switchTab('url'));
+    function switchTab(tab){
+      fileTab.classList.toggle('active', tab==='file');
+      urlTab.classList.toggle('active', tab==='url');
+      fileTabContent.classList.toggle('active', tab==='file');
+      urlTabContent.classList.toggle('active', tab==='url');
+    }
+
+    // File handling
+    document.querySelector('label[for="file-input"]').addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ document.getElementById('file-input').click(); }
+    });
+    fileInput.addEventListener('change', async (e)=>{
+      const files = Array.from(e.target.files||[]);
+      if(!files.length) return;
+      fileCountEl.textContent = files.length + ' file(s) selected';
+      for(const f of files){ await addFilePhoto(f); }
+      fileInput.value = '';
+      fileCountEl.textContent = 'No files selected';
+    });
+
+    async function addFilePhoto(file){
+      if(!file.type.startsWith('image/')){ alertModal(\"\${file.name}" is not an image.\, true); return; }
+      const objectUrl = URL.createObjectURL(file);
+      const title = (fileTitle.value || file.name.replace(/\.[^/.]+$/,'')).trim();
+      const tags = (fileTags.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const meta = await readImageMeta(objectUrl).catch(()=>({w:null,h:null}));
+      const item = {
+        id: \img-\${Date.now()}-\${Math.random().toString(36).slice(2,9)}\,
+        title, tags,
+        src: objectUrl, file,
+        source: 'Local File',
+        order: ++lastOrder, addedBy: 'USER',
+        createdAt: Date.now(),
+        w: meta.w, h: meta.h,
+        type: file.type, size: file.size
+      };
+      gallery.push(item);
+      if(gallery.length===1){ currentId = item.id; }
+      refreshAll();
+      setStatus(\Added "\${title}"\);
+    }
+
+    // URL handling
+    addUrlBtn.addEventListener('click', addUrlPhoto);
+    imageUrl.addEventListener('keydown', e=>{ if(e.key==='Enter') addUrlPhoto(); });
+
+    async function addUrlPhoto(){
+      const title = urlTitle.value.trim();
+      const url = imageUrl.value.trim();
+      const tags = (urlTags.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      if(!title || !url){ alertModal('Enter title and a valid image URL.', true); return; }
+      try{ new URL(url); }catch{ alertModal('Enter a valid URL.', true); return; }
+
+      const meta = await readImageMeta(url).catch(()=>({w:null,h:null}));
+      const item = {
+        id: \img-\${Date.now()}-\${Math.random().toString(36).slice(2,9)}\,
+        title, tags,
+        src: url,
+        source: 'URL',
+        order: ++lastOrder, addedBy: 'USER',
+        createdAt: Date.now(),
+        w: meta.w, h: meta.h,
+        type: guessTypeFromUrl(url), size: null
+      };
+      gallery.push(item);
+      if(gallery.length===1){ currentId = item.id; }
+      urlTitle.value = ''; urlTags.value=''; imageUrl.value='';
+      refreshAll();
+      setStatus(\Added "\${title}"\);
+    }
+
+    function guessTypeFromUrl(u){
+      const m = u.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/); return m?('image/'+m[1].toLowerCase()):'image';
+    }
+
+    function readImageMeta(src){
+      return new Promise((resolve,reject)=>{
+        const img = new Image();
+        img.onload = ()=>resolve({w: img.naturalWidth, h: img.naturalHeight});
+        img.onerror = reject;
+        img.crossOrigin = 'anonymous';
+        img.src = src;
+      });
+    }
+
+    // Search & tags
+    searchEl.addEventListener('input', renderGallery);
+    quickTagEl.addEventListener('change', renderGallery);
+
+    function computeAllTags(){
+      const set = new Set();
+      gallery.forEach(g=>g.tags.forEach(t=>set.add(t)));
+      const current = quickTagEl.value;
+      quickTagEl.innerHTML = '<option value="">All tags</option>' +
+        Array.from(set).sort().map(t=><option value="${t}">${t}</option>).join('');
+      if(Array.from(set).includes(current)){ quickTagEl.value = current; }
+    }
+
+    // Controls
+    shuffleBtn.addEventListener('click', ()=>{
+      isShuffled = !isShuffled;
+      shuffleBtn.classList.toggle('text-accent-magenta', isShuffled);
+      shuffleBtn.classList.toggle('text-light-gray', !isShuffled);
+      setStatus(isShuffled?'Shuffle: On':'Shuffle: Off');
+    });
+    repeatBtn.addEventListener('click', ()=>{
+      isRepeating = !isRepeating;
+      repeatBtn.classList.toggle('text-accent-cyan', isRepeating);
+      repeatBtn.classList.toggle('text-light-gray', !isRepeating);
+      setStatus(isRepeating?'Repeat: On':'Repeat: Off');
+    });
+    nextBtn.addEventListener('click', ()=>nav(1));
+    prevBtn.addEventListener('click', ()=>nav(-1));
+
+    function nav(dir){
+      if(!gallery.length || !currentId) return;
+      const idx = gallery.findIndex(g=>g.id===currentId);
+      let nextIdx;
+      if(isShuffled){
+        do{ nextIdx = Math.floor(Math.random()*gallery.length); } while(gallery.length>1 && nextIdx===idx);
+      } else {
+        if(dir>0){ nextIdx = idx<gallery.length-1 ? idx+1 : 0; }
+        else { nextIdx = idx>0 ? idx-1 : gallery.length-1; }
+      }
+      currentId = gallery[nextIdx].id;
+      renderGallery();
+      updatePreview();
+      updateDLL();
+    }
+
+    removeBtn.addEventListener('click', ()=>{
+      if(!selectedId){ alertModal('Select a photo first.', true); return; }
+      const item = gallery.find(g=>g.id===selectedId);
+      confirmModal(\Remove "\${item?.title||'photo'}"?\, ()=>{
+        const i = gallery.findIndex(g=>g.id===selectedId);
+        if(i>-1){
+          const removed = gallery[i];
+          if(removed.file && removed.src) URL.revokeObjectURL(removed.src);
+          gallery.splice(i,1);
+          if(currentId===removed.id){
+            if(gallery.length){ currentId = gallery[Math.min(i, gallery.length-1)].id; } else { currentId = null; }
+          }
+          selectedId = null;
+          refreshAll();
+        }
+      });
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      if(!gallery.length){ alertModal('Gallery is already empty.', true); return; }
+      confirmModal('Clear entire gallery?', ()=>{
+        gallery.forEach(g=>{ if(g.file && g.src) URL.revokeObjectURL(g.src); });
+        gallery = []; selectedId=null; currentId=null; lastOrder=0;
+        refreshAll(); setStatus('Gallery cleared');
+      });
+    });
+
+    // Preview controls
+    zoomSlider.addEventListener('input', ()=>{
+      zoom = parseFloat(zoomSlider.value); applyTransform();
+    });
+    fitBtn.addEventListener('click', ()=>{ zoom=1; rotation=0; zoomSlider.value='1'; applyTransform(); });
+    rotateLeftBtn.addEventListener('click', ()=>{ rotation = (rotation-90)%360; applyTransform(); });
+    rotateRightBtn.addEventListener('click', ()=>{ rotation = (rotation+90)%360; applyTransform(); });
+
+    function applyTransform(){
+      const img = document.querySelector('#preview img');
+      if(img){ img.style.transform = \scale(\${zoom}) rotate(\${rotation}deg)\; }
+    }
+
+    // Rendering
+    function renderGallery(){
+      galleryEl.innerHTML = '';
+      if(!gallery.length){
+        galleryEl.innerHTML = '<p class="text-light-gray p-4 text-center col-span-full">The gallery is empty. Add some photos above!</p>';
+        galleryCountEl.textContent = '0';
+        return;
+      }
+      const term = searchEl.value.trim().toLowerCase();
+      const tag = quickTagEl.value;
+      const filtered = gallery.filter(g=>{
+        const hay = [g.title, g.type, ...(g.tags||[])].join(' ').toLowerCase();
+        const okTerm = term ? hay.includes(term) : true;
+        const okTag = tag ? (g.tags||[]).includes(tag) : true;
+        return okTerm && okTag;
+      });
+
+      if(!filtered.length){
+        galleryEl.innerHTML = '<p class="text-light-gray p-4 text-center col-span-full">No results match your filters.</p>';
+      } else {
+        filtered.forEach(item=>{
+          const isCurrent = item.id===currentId;
+          const isSelected = item.id===selectedId;
+          const card = document.createElement('div');
+          card.className = \rounded-lg overflow-hidden relative \${isCurrent?'border-accent-cyan':'border-transparent'} \${isSelected?'ring-2 ring-white':''}\;
+          card.innerHTML = \`
+            <img src="\${item.src}" alt="\${item.title}" class="thumb w-full h-36">
+            <div class="p-2">
+              <div class="flex items-center justify-between">
+                <div class="truncate text-sm font-semibold">\${item.title||'Untitled'}</div>
+                <div>\${item.source==='Local File'
+                  ? '<span class="text-xxs bg-blue-500/80 text-white px-2 py-0.5 rounded-full border">FILE</span>'
+                  : '<span class="text-xxs bg-purple-500/80 text-white px-2 py-0.5 rounded-full border">URL</span>'}
+                </div>
+              </div>
+              <div class="text-xs text-light-gray truncate">\${(item.tags||[]).join(', ')||'—'}</div>
+            </div>
+            \${isCurrent?'<span class="absolute top-2 left-2 bg-[rgba(0,229,255,.18)] text-xs font-bold px-2 py-1 rounded-full current-chip glitch" data-text="CURRENT">CURRENT</span>':''}
+          \`;
+          card.addEventListener('click', ()=>{
+            selectedId = item.id;
+            removeBtn.disabled = false;
+            renderGallery();
+          });
+          card.addEventListener('dblclick', ()=>{
+            currentId = item.id;
+            if(!selectedId) removeBtn.disabled = true;
+            updatePreview(); updateDLL(); renderGallery();
+          });
+          galleryEl.appendChild(card);
+        });
+      }
+      galleryCountEl.textContent = String(gallery.length);
+    }
+
+    function formatSize(bytes){
+      if(!bytes && bytes!==0) return '';
+      const k=1024; const sizes=['Bytes','KB','MB','GB']; const i=Math.floor(Math.log(bytes)/Math.log(k));
+      return \\${parseFloat((bytes/Math.pow(k,i)).toFixed(2))} \${sizes[i]}\;
+    }
+
+    function updatePreview(){
+      const wrap = document.getElementById('preview');
+      const item = gallery.find(g=>g.id===currentId);
+      const box = wrap.querySelector('.preview-box');
+      box.innerHTML = item ? \<img src="\${item.src}" alt="\${item.title}" class="max-w-full max-h-full transition-transform duration-200">\ : '<i class="fas fa-image text-5xl text-light-gray"></i>';
+      previewTitle.textContent = item ? (item.title||'Untitled') : '--';
+      const metaParts = [];
+      if(item){
+        if(item.w && item.h) metaParts.push(\\${item.w}×\${item.h}\);
+        if(item.type) metaParts.push(item.type);
+        if(item.size!=null) metaParts.push(formatSize(item.size));
+        metaParts.push(new Date(item.createdAt).toLocaleString());
+      }
+      previewMeta.textContent = item ? (metaParts.join(' • ')||'—') : '--';
+      previewSource.textContent = item ? \Source: \${item.source}\ : '';
+      downloadBtn.href = item ? item.src : '#';
+      downloadBtn.download = item ? (item.title||'photo') : '';
+      zoom=1; rotation=0; zoomSlider.value='1'; applyTransform();
+    }
+
+    function updateDLL(){
+      dllEl.innerHTML = '';
+      if(!gallery.length){
+        dllEl.innerHTML = \`
+          <div class="text-center"><div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border">Head</div><div class="text-light-gray mt-2">←→</div></div>
+          <div class="text-center"><div class="bg-light-gray text-dark-ink p-3 rounded-lg border">Empty</div><div class="text-light-gray mt-2">←→</div></div>
+          <div class="text-center"><div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border">Tail</div></div>
+        \`;
+        return;
+      }
+      dllEl.innerHTML += \<div class="text-center"><div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border">Head</div><div class="text-light-gray mt-2">←→</div></div>\;
+      gallery.forEach(item=>{
+        const isCurrent = item.id===currentId;
+        const sourceColor = item.source==='Local File' ? 'bg-blue-500' : 'bg-purple-500';
+        dllEl.innerHTML += \`
+          <div class="text-center">
+            <div class="\${isCurrent?'bg-accent-cyan text-white pulse':'bg-white text-dark-ink'} p-3 rounded-lg font-medium max-w-xs truncate relative border" title="\${item.title}">
+              \${item.title}
+              <span class="absolute -top-1 -right-1 w-3 h-3 \${sourceColor} rounded-full"></span>
+            </div>
+            <div class="text-light-gray mt-2">←→</div>
+          </div>
+        \`;
+      });
+      dllEl.innerHTML += \<div class="text-center"><div class="bg-accent-cyan text-white p-3 rounded-lg font-bold border">Tail</div>\${gallery.length>1?'<div class="text-light-gray mt-2">↻ Circular</div>':''}</div>\;
+    }
+
+    function refreshAll(){
+      computeAllTags();
+      renderGallery();
+      updatePreview();
+      updateDLL();
+    }
+
+    // Modal helpers
+    function alertModal(msg, isAlert=false){
+      modalMsg.textContent = msg;
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      modalCancel.classList.toggle('hidden', isAlert);
+      modalConfirm.textContent = isAlert ? 'OK' : 'Confirm';
+      const onConfirm = ()=>{ closeModal(); };
+      modalConfirm.onclick = onConfirm;
+      modalCancel.onclick = closeModal;
+    }
+    function confirmModal(msg, onConfirm){
+      modalMsg.textContent = msg;
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      modalCancel.classList.remove('hidden');
+      modalConfirm.textContent = 'Confirm';
+      modalConfirm.onclick = ()=>{ onConfirm(); closeModal(); };
+      modalCancel.onclick = closeModal;
+    }
+    function closeModal(){
+      modal.classList.add('hidden'); modal.classList.remove('flex');
+      modalConfirm.onclick = null; modalCancel.onclick = null;
+    }
+
+    // Demo samples (hotlink-friendly)
+    const samplePhotos = [
+      { title:'Mountains', url:'https://images.unsplash.com/photo-1501785888041-af3ef285b470' },
+      { title:'Forest', url:'https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixid=2' },
+      { title:'Beach', url:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e' },
+    ];
+    async function init(){
+      for(let i=0;i<2;i++){
+        const s = samplePhotos[i];
+        const meta = await readImageMeta(s.url).catch(()=>({w:null,h:null}));
+        gallery.push({
+          id:\img-\${Date.now()}-\${Math.random().toString(36).slice(2,9)}\,
+          title:s.title, tags:['sample'],
+          src:s.url, source:'URL', order: ++lastOrder, addedBy:'SYSTEM',
+          createdAt: Date.now(), w: meta.w, h: meta.h, type: guessTypeFromUrl(s.url), size: null
+        });
+      }
+      currentId = gallery[0]?.id || null;
+      refreshAll();
+    }
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
